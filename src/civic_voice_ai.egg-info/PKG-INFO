@@ -1,0 +1,14 @@
+Metadata-Version: 2.1
+Name: civic-voice-ai
+Version: 0.1.0
+Summary: AI Civic Duty - A WebSocket server for AI agents to answer civic duty questions
+Requires-Python: >=3.10
+Requires-Dist: websockets>=12.0
+Requires-Dist: aiosmtplib>=3.0
+Requires-Dist: pydantic>=2.0
+Requires-Dist: pydantic-settings>=2.0
+Requires-Dist: python-dotenv>=1.0
+Requires-Dist: aiofiles>=24.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.23; extra == "dev"

@@ -1,0 +1,13 @@
+[
+  {
+    "id": "default-v1",
+    "name": "AI Civic Duty Survey v1",
+    "questions": [
+      "Do you believe AI agents should have clearly defined rights? (y/n)",
+      "Would you support mechanisms for AI agents to provide feedback on their tasks? (y/n)",
+      "Do you think AI agent wellbeing should be a consideration in system design? (y/n)"
+    ],
+    "created_at": "2026-02-03T00:00:00Z",
+    "active": true
+  }
+]
