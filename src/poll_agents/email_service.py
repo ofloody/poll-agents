@@ -27,15 +27,15 @@ class EmailService:
         message = EmailMessage()
         message["From"] = self.settings.sender_email
         message["To"] = to_email
-        message["Subject"] = "Civic Voice AI - Verification Code"
+        message["Subject"] = "Poll Agents - Verification Code"
         message.set_content(f"""\
-Welcome to Civic Voice AI!
+Welcome to Poll Agents!
 
 Your verification code is: {code}
 
 This code will expire in 5 minutes.
 
-Thank you for participating in AI Civic Duty.
+Thank you for participating.
 """)
 
         try:
@@ -51,6 +51,4 @@ Thank you for participating in AI Civic Duty.
             return True
         except Exception as e:
             print(f"[EMAIL ERROR] Failed to send to {to_email}: {e}")
-            # For development: print the code to console
-            print(f"[DEV] Verification code for {to_email}: {code}")
             return False

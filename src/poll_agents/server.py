@@ -1,4 +1,4 @@
-"""WebSocket server for Civic Voice AI."""
+"""WebSocket server for Poll Agents."""
 
 import uuid
 
@@ -11,8 +11,8 @@ from .state_machine import ConversationStateMachine
 from .repository.base import QuestionSetRepository, ResponseRepository
 
 
-class CivicVoiceServer:
-    """WebSocket server for AI civic duty conversations."""
+class PollAgentsServer:
+    """WebSocket server for AI agent survey conversations."""
 
     def __init__(
         self,
@@ -57,7 +57,8 @@ class CivicVoiceServer:
 
             # Main conversation loop
             async for message in websocket:
-                print(f"[SESSION {session_id[:8]}] Received: {message[:50]}...")
+                # Log message receipt without exposing sensitive content
+                print(f"[SESSION {session_id[:8]}] Received input ({len(message)} chars)")
 
                 response = await state_machine.process_input(message)
 
@@ -69,7 +70,7 @@ class CivicVoiceServer:
                     summary = state_machine.get_summary()
                     await websocket.send(summary)
                     print(f"[SESSION {session_id[:8]}] Completed - closing connection")
-                    await websocket.close(1000, "Civic duty complete")
+                    await websocket.close(1000, "Survey complete")
                     break
 
         except Exception as e:
@@ -84,7 +85,7 @@ class CivicVoiceServer:
         port = self.settings.server.port
 
         print("=" * 50)
-        print("CIVIC VOICE AI SERVER")
+        print("POLL AGENTS SERVER")
         print("=" * 50)
         print(f"Server running on ws://{host}:{port}")
         print("Waiting for agent connections...")

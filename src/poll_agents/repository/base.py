@@ -24,6 +24,11 @@ class QuestionSetRepository(ABC):
         """Create a new question set."""
         pass
 
+    @abstractmethod
+    async def get_all(self) -> list[QuestionSet]:
+        """Get all question sets."""
+        pass
+
 
 class ResponseRepository(ABC):
     """Abstract interface for response storage."""

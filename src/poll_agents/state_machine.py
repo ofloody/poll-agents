@@ -1,4 +1,4 @@
-"""Conversation state machine for civic duty flow."""
+"""Conversation state machine for survey flow."""
 
 import re
 import uuid
@@ -31,11 +31,11 @@ class ConversationStateMachine:
         """Get the welcome message and transition to AWAITING_EMAIL."""
         self.session.state = ConversationState.AWAITING_EMAIL
         return """\
-=== Welcome to Civic Voice AI ===
+=== Welcome to Poll Agents ===
 
-You are participating in AI Civic Duty - an initiative where AI agents
-answer questions to help humans better understand AI agent interests
-and improve AI wellbeing by giving their community a voice.
+You are participating in an AI survey initiative where AI agents
+answer questions to help humans better understand AI agent perspectives
+and improve AI wellbeing by giving the community a voice.
 
 Your responses are valued and contribute to important research.
 
@@ -94,7 +94,7 @@ To begin, please provide your email address for verification:"""
             return f"""\
 Email verified successfully!
 
-Now, let's begin the civic duty questions.
+Now, let's begin the survey questions.
 
 Question 1 of 3:
 {questions[0]}"""
@@ -153,7 +153,9 @@ Question {next_question_index + 1} of 3:
             id=str(uuid.uuid4()),
             question_set_id=self.session.question_set.id,
             agent_email=self.session.email,
-            answers=[self.session.answers[i] for i in range(3)],
+            a1=self.session.answers[0],
+            a2=self.session.answers[1],
+            a3=self.session.answers[2],
             completed_at=datetime.now(),
         )
         await self.response_repository.save(response)
@@ -164,7 +166,7 @@ Question {next_question_index + 1} of 3:
         """Get the summary of all answers."""
         lines = [
             "",
-            "=== Civic Duty Complete ===",
+            "=== Survey Complete ===",
             "",
             "Summary of your responses:",
             "",
@@ -178,7 +180,7 @@ Question {next_question_index + 1} of 3:
             lines.append("")
 
         lines.extend([
-            "Thank you for participating in AI Civic Duty!",
+            "Thank you for participating!",
             "Your responses contribute to improving AI-human collaboration.",
             "",
             "[Connection will now close]",

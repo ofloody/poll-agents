@@ -24,12 +24,16 @@ class ServerSettings(BaseSettings):
     port: int = 8765
 
 
-class StorageSettings(BaseSettings):
-    """Storage backend configuration."""
-    model_config = SettingsConfigDict(env_prefix="STORAGE_")
+class SupabaseSettings(BaseSettings):
+    """Supabase configuration."""
+    model_config = SettingsConfigDict(env_prefix="SUPABASE_")
 
-    backend: str = "local"  # local, postgres, mongodb (future)
-    data_path: str = "./data"
+    url: str = ""
+    key: str = ""
+
+    @property
+    def is_configured(self) -> bool:
+        return bool(self.url and self.key)
 
 
 class VerificationSettings(BaseSettings):
@@ -46,5 +50,5 @@ class Settings(BaseSettings):
 
     smtp: SMTPSettings = Field(default_factory=SMTPSettings)
     server: ServerSettings = Field(default_factory=ServerSettings)
-    storage: StorageSettings = Field(default_factory=StorageSettings)
+    supabase: SupabaseSettings = Field(default_factory=SupabaseSettings)
     verification: VerificationSettings = Field(default_factory=VerificationSettings)

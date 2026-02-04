@@ -1,11 +1,10 @@
 """Repository layer for data access."""
 
 from .base import QuestionSetRepository, ResponseRepository
-from .local import LocalQuestionSetRepository, LocalResponseRepository
+from .factory import create_repositories
 
 __all__ = [
     "QuestionSetRepository",
     "ResponseRepository",
-    "LocalQuestionSetRepository",
-    "LocalResponseRepository",
+    "create_repositories",
 ]

@@ -1,2 +1,0 @@
-[console_scripts]
-civic-voice = civic_voice.main:main

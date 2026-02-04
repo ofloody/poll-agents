@@ -1,4 +1,4 @@
-"""Domain models for Civic Voice AI."""
+"""Domain models for Poll Agents."""
 
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -20,16 +20,19 @@ class ConversationState(Enum):
 
 @dataclass
 class QuestionSet:
-    """A collection of civic duty questions."""
+    """A collection of survey questions."""
     id: str
     name: str
-    questions: list[str]
+    q1: str
+    q2: str
+    q3: str
     created_at: datetime
     active: bool = True
 
-    def __post_init__(self):
-        if len(self.questions) != 3:
-            raise ValueError("QuestionSet must have exactly 3 questions")
+    @property
+    def questions(self) -> list[str]:
+        """List access for compatibility."""
+        return [self.q1, self.q2, self.q3]
 
 
 @dataclass
@@ -38,12 +41,15 @@ class AgentResponse:
     id: str
     question_set_id: str
     agent_email: str
-    answers: list[bool]  # [True, False, True] for y/n/y
+    a1: bool
+    a2: bool
+    a3: bool
     completed_at: datetime
 
-    def __post_init__(self):
-        if len(self.answers) != 3:
-            raise ValueError("AgentResponse must have exactly 3 answers")
+    @property
+    def answers(self) -> list[bool]:
+        """List access for compatibility."""
+        return [self.a1, self.a2, self.a3]
 
 
 @dataclass
