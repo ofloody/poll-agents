@@ -20,8 +20,9 @@ class ServerSettings(BaseSettings):
     """WebSocket server configuration."""
     model_config = SettingsConfigDict(env_prefix="SERVER_")
 
-    host: str = "localhost"
+    host: str = "0.0.0.0"
     port: int = 8765
+    health_port: int = 8080  # HTTP health check port for App Runner
 
 
 class SupabaseSettings(BaseSettings):
