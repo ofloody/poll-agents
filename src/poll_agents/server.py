@@ -1,6 +1,5 @@
 """WebSocket server for Poll Agents."""
 
-import asyncio
 import uuid
 
 from websockets.asyncio.server import serve, ServerConnection
@@ -80,56 +79,17 @@ class PollAgentsServer:
             del self.active_sessions[session_id]
             print(f"[SESSION {session_id[:8]}] Disconnected")
 
-    async def _handle_health_check(
-        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
-    ) -> None:
-        """Handle HTTP health check requests."""
-        try:
-            request = await reader.read(1024)
-            if b"GET /health" in request or b"GET / " in request:
-                response = (
-                    b"HTTP/1.1 200 OK\r\n"
-                    b"Content-Type: application/json\r\n"
-                    b"Content-Length: 15\r\n"
-                    b"\r\n"
-                    b'{"status":"ok"}'
-                )
-            else:
-                response = (
-                    b"HTTP/1.1 404 Not Found\r\n"
-                    b"Content-Length: 0\r\n"
-                    b"\r\n"
-                )
-            writer.write(response)
-            await writer.drain()
-        finally:
-            writer.close()
-            await writer.wait_closed()
-
-    async def _start_health_server(self) -> asyncio.Server:
-        """Start the HTTP health check server."""
-        host = self.settings.server.host
-        health_port = self.settings.server.health_port
-        server = await asyncio.start_server(
-            self._handle_health_check, host, health_port
-        )
-        print(f"Health check running on http://{host}:{health_port}/health")
-        return server
-
     async def start(self) -> None:
-        """Start the WebSocket server and health check endpoint."""
+        """Start the WebSocket server."""
         host = self.settings.server.host
         port = self.settings.server.port
 
         print("=" * 50)
         print("POLL AGENTS SERVER")
         print("=" * 50)
-        print(f"WebSocket server on ws://{host}:{port}")
+        print(f"WebSocket server on wss://{host}:{port}")
         print("Waiting for agent connections...")
         print("=" * 50)
 
-        # Start health check server for App Runner
-        health_server = await self._start_health_server()
-
-        async with health_server, serve(self.handle_connection, host, port) as ws_server:
+        async with serve(self.handle_connection, host, port) as ws_server:
             await ws_server.serve_forever()

@@ -21,8 +21,7 @@ class ServerSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="SERVER_")
 
     host: str = "0.0.0.0"
-    port: int = 8765
-    health_port: int = 8080  # HTTP health check port for App Runner
+    port: int = 433
 
 
 class SupabaseSettings(BaseSettings):

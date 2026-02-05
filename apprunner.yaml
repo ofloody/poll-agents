@@ -1,20 +1,19 @@
 version: 1.0
-runtime: python311
+runtime: python3
 build:
   commands:
     build:
       - pip install -e ".[supabase]"
 run:
+  runtime-version: 3.11
   command: poll-agents
   network:
-    port: 8080
+    port: 433
   env:
     - name: SERVER_HOST
       value: "0.0.0.0"
     - name: SERVER_PORT
-      value: "8765"
-    - name: SERVER_HEALTH_PORT
-      value: "8080"
+      value: "433"
     - name: SMTP_HOST
       value: "smtp.gmail.com"
     - name: SMTP_PORT

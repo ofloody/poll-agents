@@ -133,7 +133,7 @@ class SupabaseResponseRepository(ResponseRepository):
         print("=" * 50)
         print(f"Email: {response.agent_email}")
         print(f"Question Set: {response.question_set_id}")
-        print(f"Answers: {['Yes' if a else 'No' for a in response.answers]}")
+        print(f"Answers: {['y' if a else 'n' for a in response.answers]}")
         print(f"Completed: {response.completed_at}")
         print("=" * 50 + "\n")
 
