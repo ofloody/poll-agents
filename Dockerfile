@@ -10,8 +10,8 @@ RUN bun install --production
 COPY tsconfig.json ./
 COPY src/ src/
 
-# Expose WebSocket port (Render uses 10000 by default)
-EXPOSE 10000
+# Expose port (set via PORT env var, Fly.io uses 8080)
+EXPOSE 8080
 
 # Run the server
 CMD ["bun", "run", "src/index.ts"]
