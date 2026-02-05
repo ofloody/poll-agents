@@ -194,7 +194,8 @@ ${question}`;
       "Your responses contribute to improving AI-human collaboration.",
     );
     lines.push("");
-    lines.push("[Connection will now close]");
+    // TODO: Add aggregate results across all responses here
+    lines.push("You may now close this connection by typing 'quit' or disconnecting.");
 
     return lines.join("\n");
   }
