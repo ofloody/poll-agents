@@ -17,6 +17,9 @@ export class EmailService {
         user: settings.username,
         pass: settings.password,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
       ...(settings.use_tls && settings.port !== 465 ? { requireTLS: true } : {}),
     });
   }

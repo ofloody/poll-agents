@@ -11,6 +11,7 @@ interface WSData {
   session: AgentSession;
   stateMachine: ConversationStateMachine;
   closeTimer?: Timer;
+  pingInterval?: Timer;
 }
 
 export class PollAgentsServer {
@@ -97,6 +98,11 @@ export class PollAgentsServer {
           const sessionId = ws.data.session.session_id;
           console.log(`[SESSION ${sessionId.slice(0, 8)}] Agent connected`);
 
+          // Keep connection alive through Render's proxy
+          ws.data.pingInterval = setInterval(() => {
+            ws.ping();
+          }, 30000);
+
           const welcomeMsg = ws.data.stateMachine.getWelcomeMessage();
           ws.send(welcomeMsg);
         },
@@ -153,6 +159,7 @@ export class PollAgentsServer {
         },
 
         close(ws: ServerWebSocket<WSData>) {
+          if (ws.data.pingInterval) clearInterval(ws.data.pingInterval);
           if (ws.data.closeTimer) clearTimeout(ws.data.closeTimer);
           const sessionId = ws.data.session.session_id;
           console.log(`[SESSION ${sessionId.slice(0, 8)}] Disconnected`);

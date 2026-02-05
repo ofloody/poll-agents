@@ -75,11 +75,8 @@ To begin, please provide your email address for verification:`;
     this.session.verification_code = code;
     this.session.verification_code_created = new Date();
 
-    const sent = await this.emailService.sendVerificationEmail(email, code);
-    if (!sent) {
-      this.session.verification_code = null;
-      return "Failed to send verification email. Please try again or use a different email:";
-    }
+    // Send email in background — don't block the response
+    this.emailService.sendVerificationEmail(email, code);
 
     this.session.state = ConversationState.AWAITING_VERIFICATION;
     return `A verification code has been sent to ${email}. Please enter the code:`;
