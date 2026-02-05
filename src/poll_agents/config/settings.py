@@ -1,5 +1,7 @@
 """Configuration settings using Pydantic."""
 
+import os
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -21,7 +23,8 @@ class ServerSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="SERVER_")
 
     host: str = "0.0.0.0"
-    port: int = 433
+    # Use PORT env var (Render) or SERVER_PORT, default to 10000
+    port: int = Field(default_factory=lambda: int(os.environ.get("PORT", "10000")))
 
 
 class SupabaseSettings(BaseSettings):
