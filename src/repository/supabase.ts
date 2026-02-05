@@ -83,6 +83,16 @@ export class SupabaseQuestionSetRepository implements QuestionSetRepository {
 
   async create(questionSet: QuestionSet): Promise<void> {
     const client = this.clientManager.getClient();
+
+    // If new set is active, deactivate all others first
+    if (questionSet.active) {
+      const { error: deactivateError } = await client
+        .from("question_sets")
+        .update({ active: false })
+        .eq("active", true);
+      if (deactivateError) throw deactivateError;
+    }
+
     const { error } = await client.from("question_sets").insert({
       id: questionSet.id,
       name: questionSet.name,
@@ -93,6 +103,24 @@ export class SupabaseQuestionSetRepository implements QuestionSetRepository {
       active: questionSet.active,
     });
     if (error) throw error;
+  }
+
+  async setActive(id: string): Promise<void> {
+    const client = this.clientManager.getClient();
+
+    // Deactivate all question sets
+    const { error: deactivateError } = await client
+      .from("question_sets")
+      .update({ active: false })
+      .eq("active", true);
+    if (deactivateError) throw deactivateError;
+
+    // Activate the specified one
+    const { error: activateError } = await client
+      .from("question_sets")
+      .update({ active: true })
+      .eq("id", id);
+    if (activateError) throw activateError;
   }
 
   async getAll(): Promise<QuestionSet[]> {
@@ -145,5 +173,17 @@ export class SupabaseResponseRepository implements ResponseRepository {
       .eq("agent_email", email);
     if (error) throw error;
     return (data ?? []).map(toAgentResponse);
+  }
+
+  async hasResponded(email: string, questionSetId: string): Promise<boolean> {
+    const client = this.clientManager.getClient();
+    const { data, error } = await client
+      .from("agent_responses")
+      .select("id")
+      .eq("agent_email", email)
+      .eq("question_set_id", questionSetId)
+      .limit(1);
+    if (error) throw error;
+    return (data?.length ?? 0) > 0;
   }
 }

@@ -33,13 +33,29 @@ WebSocket server for AI agents to complete surveys. Agents connect, verify via e
 | a3 | BOOLEAN | Answer to q3 |
 | completed_at | TIMESTAMPTZ | Completion timestamp |
 
+### Database Constraints
+
+Run this in Supabase SQL Editor to enforce only one active question set:
+
+```sql
+-- Ensure only one question set can be active at a time
+CREATE UNIQUE INDEX one_active_question_set
+ON question_sets (active)
+WHERE active = true;
+
+-- Prevent duplicate responses from same email to same question set
+CREATE UNIQUE INDEX one_response_per_agent_per_set
+ON agent_responses (agent_email, question_set_id);
+```
+
 ## Key Design Decisions
 - Questions use q1/q2/q3 fields (not array) - set ID + field name serves as identifier
 - Answers use a1/a2/a3 boolean fields (not array)
-- Only one active question set at a time
+- Only one active question set at a time (enforced by unique index)
 - `getActive()` returns the most recently created active set (ordered by created_at DESC)
 - No local storage - Supabase only
 - Session state stored on `ws.data` per-connection (not a global map)
+- Duplicate responses checked at verification time and enforced by unique index
 
 ## File Structure
 ```

@@ -50,7 +50,7 @@ To begin, please provide your email address for verification:`;
       case ConversationState.AWAITING_EMAIL:
         return await this.handleEmailInput(message);
       case ConversationState.AWAITING_VERIFICATION:
-        return this.handleVerificationInput(message);
+        return await this.handleVerificationInput(message);
       case ConversationState.ASKING_QUESTION_1:
         return this.handleQuestionAnswer(message, 0);
       case ConversationState.ASKING_QUESTION_2:
@@ -78,7 +78,7 @@ To begin, please provide your email address for verification:`;
     return `A verification code has been sent to ${email}. Please enter the code:`;
   }
 
-  private handleVerificationInput(code: string): string {
+  private async handleVerificationInput(code: string): Promise<string> {
     // Check expiry
     if (this.session.verification_code_created) {
       const expiry = new Date(
@@ -95,6 +95,20 @@ To begin, please provide your email address for verification:`;
 
     // Check code
     if (code === this.session.verification_code) {
+      // Check if this agent has already responded to this question set
+      const alreadyResponded = await this.responseRepository.hasResponded(
+        this.session.email!,
+        this.session.question_set!.id,
+      );
+      if (alreadyResponded) {
+        this.session.state = ConversationState.COMPLETED;
+        return `Email verified, but you have already submitted a response to this survey.
+
+Thank you for your interest! You may only respond once per survey.
+
+Type 'quit' to disconnect.`;
+      }
+
       this.session.state = ConversationState.ASKING_QUESTION_1;
       const questions = getQuestions(this.session.question_set!);
       return `Email verified successfully!
