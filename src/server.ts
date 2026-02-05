@@ -57,13 +57,21 @@ export class PollAgentsServer {
 
         // WebSocket upgrade for / and /ws
         if (url.pathname === "/" || url.pathname === "/ws") {
+          // Only attempt upgrade if this is a WebSocket request
+          const upgradeHeader = req.headers.get("upgrade");
+          if (!upgradeHeader || upgradeHeader.toLowerCase() !== "websocket") {
+            return new Response(
+              "Poll Agents WebSocket Server\n\nConnect via WebSocket at this URL.\nHealth check: /health",
+              { status: 200, headers: { "Content-Type": "text/plain" } },
+            );
+          }
+
           const sessionId = crypto.randomUUID();
           const session = createSession(sessionId);
 
           // Load active question set before upgrading
           const questionSet = await self.questionSetRepo.getActive();
           if (!questionSet) {
-            // Can't upgrade to WS just to send error, so return HTTP error
             return new Response("No active question set available. Please try again later.", {
               status: 503,
             });
