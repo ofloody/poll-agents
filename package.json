@@ -1,0 +1,19 @@
+{
+  "name": "poll-agents",
+  "version": "0.1.0",
+  "description": "Poll Agents - A WebSocket server for AI agents to answer survey questions",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch run src/index.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "nodemailer": "^6.9.16"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.17",
+    "bun-types": "^1.2.2",
+    "typescript": "^5.7.3"
+  }
+}

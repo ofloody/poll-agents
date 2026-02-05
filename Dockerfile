@@ -1,19 +1,17 @@
-FROM python:3.11-slim
+FROM oven/bun:1 AS base
 
 WORKDIR /app
 
-# Copy project files
-COPY pyproject.toml .
-COPY src/ src/
+# Install dependencies
+COPY package.json bun.lock* ./
+RUN bun install --production
 
-# Install the package with supabase dependencies
-RUN pip install --no-cache-dir ".[supabase]"
+# Copy source
+COPY tsconfig.json ./
+COPY src/ src/
 
 # Expose WebSocket port (Render uses 10000 by default)
 EXPOSE 10000
 
-# Unbuffered Python output for Docker logs
-ENV PYTHONUNBUFFERED=1
-
 # Run the server
-CMD ["poll-agents"]
+CMD ["bun", "run", "src/index.ts"]

@@ -4,11 +4,10 @@
 WebSocket server for AI agents to complete surveys. Agents connect, verify via email, answer 3 yes/no questions, and responses are stored in Supabase.
 
 ## Tech Stack
-- Python 3.10+
-- WebSockets for agent connections
-- Supabase (PostgreSQL) for storage
-- aiosmtplib for email verification
-- Pydantic for settings/validation
+- Bun (TypeScript runtime)
+- Bun.serve() for WebSocket + HTTP
+- Supabase (PostgreSQL) for storage via @supabase/supabase-js
+- nodemailer for email verification
 
 ## Database Schema (Supabase)
 
@@ -38,33 +37,36 @@ WebSocket server for AI agents to complete surveys. Agents connect, verify via e
 - Questions use q1/q2/q3 fields (not array) - set ID + field name serves as identifier
 - Answers use a1/a2/a3 boolean fields (not array)
 - Only one active question set at a time
-- `get_active()` returns the most recently created active set (ordered by created_at DESC)
+- `getActive()` returns the most recently created active set (ordered by created_at DESC)
 - No local storage - Supabase only
+- Session state stored on `ws.data` per-connection (not a global map)
 
 ## File Structure
 ```
-src/poll_agents/
-├── config/settings.py    # Pydantic settings (SMTP, Server, Supabase, Verification)
-├── models.py             # QuestionSet, AgentResponse, AgentSession, ConversationState
+src/
+├── index.ts              # Entry point
+├── config/settings.ts    # Env var reading (replaces Pydantic settings)
+├── models.ts             # TS interfaces/enums
 ├── repository/
-│   ├── base.py          # Abstract repository interfaces
-│   ├── supabase.py      # Supabase implementation
-│   └── factory.py       # Creates repositories from settings
-├── server.py            # WebSocket server
-├── state_machine.py     # Conversation flow logic
-├── email_service.py     # Email verification
-└── main.py              # Entry point
+│   ├── base.ts           # Repository interfaces
+│   ├── supabase.ts       # Supabase implementation
+│   └── factory.ts        # Creates repositories from settings
+├── server.ts             # Bun.serve() with WebSocket + /health
+├── state-machine.ts      # Conversation flow logic
+└── email-service.ts      # nodemailer SMTP
 ```
 
 ## Environment Variables
 - `SUPABASE_URL` - Supabase project URL
 - `SUPABASE_KEY` - Supabase service key
-- `SMTP_*` - Email configuration
-- `SERVER_HOST/PORT` - WebSocket server config
-- `VERIFICATION_*` - Code length and expiry
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_SENDER_EMAIL`, `SMTP_USE_TLS`
+- `SERVER_HOST` - Server bind host (default: 0.0.0.0)
+- `PORT` or `SERVER_PORT` - Server port (default: 10000)
+- `VERIFICATION_CODE_LENGTH` - Verification code length (default: 6)
+- `VERIFICATION_CODE_EXPIRY_SECONDS` - Code expiry in seconds (default: 300)
 
 ## Running
 ```bash
-pip install -e ".[supabase]"
-poll-agents
+bun install
+bun run src/index.ts
 ```
