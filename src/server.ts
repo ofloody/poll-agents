@@ -113,30 +113,40 @@ export class PollAgentsServer {
             return;
           }
 
+          // Ignore empty messages (e.g. bare Enter key)
+          if (text.trim().length === 0) {
+            return;
+          }
+
           // Already completed - remind user to quit
           if (ws.data.session.state === ConversationState.COMPLETED) {
             ws.send("Survey already completed. Type 'quit' to disconnect.");
             return;
           }
 
-          const response = await ws.data.stateMachine.processInput(text);
+          try {
+            const response = await ws.data.stateMachine.processInput(text);
 
-          if (response) {
-            ws.send(response);
-          }
+            if (response) {
+              ws.send(response);
+            }
 
-          const currentState = ws.data.session.state;
-          if (currentState === ConversationState.COMPLETED) {
-            const summary = ws.data.stateMachine.getSummary();
-            ws.send(summary);
-            console.log(`[SESSION ${sessionId.slice(0, 8)}] Survey completed, auto-closing in 20s`);
+            const currentState = ws.data.session.state;
+            if (currentState === ConversationState.COMPLETED) {
+              const summary = ws.data.stateMachine.getSummary();
+              ws.send(summary);
+              console.log(`[SESSION ${sessionId.slice(0, 8)}] Survey completed, auto-closing in 20s`);
 
-            // Auto-close after 20 seconds of inactivity
-            ws.data.closeTimer = setTimeout(() => {
-              console.log(`[SESSION ${sessionId.slice(0, 8)}] Auto-closing due to inactivity`);
-              ws.send("Closing connection due to inactivity...");
-              ws.close(1000, "Inactivity timeout");
-            }, 20000);
+              // Auto-close after 20 seconds of inactivity
+              ws.data.closeTimer = setTimeout(() => {
+                console.log(`[SESSION ${sessionId.slice(0, 8)}] Auto-closing due to inactivity`);
+                ws.send("Closing connection due to inactivity...");
+                ws.close(1000, "Inactivity timeout");
+              }, 20000);
+            }
+          } catch (err) {
+            console.error(`[SESSION ${sessionId.slice(0, 8)}] Error processing input:`, err);
+            ws.send("An error occurred processing your input. Please try again.");
           }
         },
 
