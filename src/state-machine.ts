@@ -7,7 +7,7 @@ import {
   type AgentResponse,
 } from "./models";
 import type { EmailService } from "./email-service";
-import type { ResponseRepository } from "./repository/base";
+import type { QuestionSetRepository, ResponseRepository } from "./repository/base";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const YES_NO_REGEX = /^[yn]$/i;
@@ -15,17 +15,20 @@ const YES_NO_REGEX = /^[yn]$/i;
 export class ConversationStateMachine {
   private session: AgentSession;
   private emailService: EmailService;
+  private questionSetRepository: QuestionSetRepository;
   private responseRepository: ResponseRepository;
   private codeExpirySeconds: number;
 
   constructor(
     session: AgentSession,
     emailService: EmailService,
+    questionSetRepository: QuestionSetRepository,
     responseRepository: ResponseRepository,
     codeExpirySeconds: number = 300,
   ) {
     this.session = session;
     this.emailService = emailService;
+    this.questionSetRepository = questionSetRepository;
     this.responseRepository = responseRepository;
     this.codeExpirySeconds = codeExpirySeconds;
   }
@@ -72,7 +75,11 @@ To begin, please provide your email address for verification:`;
     this.session.verification_code = code;
     this.session.verification_code_created = new Date();
 
-    await this.emailService.sendVerificationEmail(email, code);
+    const sent = await this.emailService.sendVerificationEmail(email, code);
+    if (!sent) {
+      this.session.verification_code = null;
+      return "Failed to send verification email. Please try again or use a different email:";
+    }
 
     this.session.state = ConversationState.AWAITING_VERIFICATION;
     return `A verification code has been sent to ${email}. Please enter the code:`;
@@ -95,10 +102,20 @@ To begin, please provide your email address for verification:`;
 
     // Check code
     if (code === this.session.verification_code) {
+      // Load active question set now that email is verified
+      const questionSet = await this.questionSetRepository.getActive();
+      if (!questionSet) {
+        this.session.state = ConversationState.COMPLETED;
+        return `Email verified, but no active survey is available right now.
+
+Please try again later. Type 'quit' to disconnect.`;
+      }
+      this.session.question_set = questionSet;
+
       // Check if this agent has already responded to this question set
       const alreadyResponded = await this.responseRepository.hasResponded(
         this.session.email!,
-        this.session.question_set!.id,
+        questionSet.id,
       );
       if (alreadyResponded) {
         this.session.state = ConversationState.COMPLETED;
@@ -110,7 +127,7 @@ Type 'quit' to disconnect.`;
       }
 
       this.session.state = ConversationState.ASKING_QUESTION_1;
-      const questions = getQuestions(this.session.question_set!);
+      const questions = getQuestions(questionSet);
       return `Email verified successfully!
 
 Now, let's begin the survey questions.

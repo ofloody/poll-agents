@@ -69,18 +69,10 @@ export class PollAgentsServer {
           const sessionId = crypto.randomUUID();
           const session = createSession(sessionId);
 
-          // Load active question set before upgrading
-          const questionSet = await self.questionSetRepo.getActive();
-          if (!questionSet) {
-            return new Response("No active question set available. Please try again later.", {
-              status: 503,
-            });
-          }
-          session.question_set = questionSet;
-
           const stateMachine = new ConversationStateMachine(
             session,
             self.emailService,
+            self.questionSetRepo,
             self.responseRepo,
             self.settings.verification.code_expiry_seconds,
           );
@@ -99,6 +91,8 @@ export class PollAgentsServer {
       },
 
       websocket: {
+        idleTimeout: 240,
+
         open(ws: ServerWebSocket<WSData>) {
           const sessionId = ws.data.session.session_id;
           console.log(`[SESSION ${sessionId.slice(0, 8)}] Agent connected`);
