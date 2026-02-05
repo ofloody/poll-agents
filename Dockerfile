@@ -1,20 +1,19 @@
-FROM python:3.12-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install dependencies
+# Copy project files
 COPY pyproject.toml .
-RUN pip install --no-cache-dir .
-RUN pip install --no-cache-dir supabase>=2.0
-
-# Copy source code
 COPY src/ src/
 
-# Install the package
-RUN pip install --no-cache-dir -e ".[supabase]"
+# Install the package with supabase dependencies
+RUN pip install --no-cache-dir ".[supabase]"
 
-# Expose ports: 8080 for health checks, 8765 for WebSocket
-EXPOSE 8080 8765
+# Expose WebSocket port (Render uses 10000 by default)
+EXPOSE 10000
+
+# Unbuffered Python output for Docker logs
+ENV PYTHONUNBUFFERED=1
 
 # Run the server
 CMD ["poll-agents"]

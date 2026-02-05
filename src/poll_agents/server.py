@@ -1,8 +1,11 @@
 """WebSocket server for Poll Agents."""
 
+import asyncio
 import uuid
 
 from websockets.asyncio.server import serve, ServerConnection
+from websockets.datastructures import Headers
+from websockets.http11 import Request, Response
 
 from .config.settings import Settings
 from .models import AgentSession, ConversationState
@@ -79,6 +82,12 @@ class PollAgentsServer:
             del self.active_sessions[session_id]
             print(f"[SESSION {session_id[:8]}] Disconnected")
 
+    async def health_check(self, connection, request: Request) -> Response | None:
+        """Handle HTTP health check requests."""
+        if request.path == "/health":
+            return Response(200, "OK", Headers([("Content-Type", "text/plain")]), b"OK")
+        return None  # Continue with WebSocket upgrade
+
     async def start(self) -> None:
         """Start the WebSocket server."""
         host = self.settings.server.host
@@ -88,8 +97,14 @@ class PollAgentsServer:
         print("POLL AGENTS SERVER")
         print("=" * 50)
         print(f"WebSocket server on wss://{host}:{port}")
+        print(f"Health check at http://{host}:{port}/health")
         print("Waiting for agent connections...")
         print("=" * 50)
 
-        async with serve(self.handle_connection, host, port) as ws_server:
+        async with serve(
+            self.handle_connection,
+            host,
+            port,
+            process_request=self.health_check,
+        ) as ws_server:
             await ws_server.serve_forever()
