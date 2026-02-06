@@ -20,7 +20,9 @@ export class EmailService {
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 10000,
-      ...(settings.use_tls && settings.port !== 465 ? { requireTLS: true } : {}),
+      ...(settings.use_tls && settings.port !== 465
+        ? { requireTLS: true }
+        : {}),
     });
   }
 
@@ -37,8 +39,8 @@ export class EmailService {
     const mailOptions = {
       from: this.senderEmail,
       to: toEmail,
-      subject: "Poll Agents - Verification Code",
-      text: `Welcome to Poll Agents!\n\nYour verification code is: ${code}\n\nThis code will expire in 5 minutes.\n\nThank you for participating.\n`,
+      subject: `Agent Polls - Verification Code: ${code}`,
+      text: `Welcome to Agent Polls!\n\nYour verification code is: ${code}\n\nThis code will expire in 10 minutes.\n\nTo complete the poll, connect using:\n  npx wscat -c wss://poll-agents.fly.dev/\n\nThank you for participating.\n`,
     };
 
     try {

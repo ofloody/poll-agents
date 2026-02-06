@@ -1,5 +1,7 @@
 /** Domain models for Poll Agents. */
 
+export const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 export enum ConversationState {
   WELCOME = "WELCOME",
   AWAITING_EMAIL = "AWAITING_EMAIL",

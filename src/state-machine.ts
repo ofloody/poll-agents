@@ -2,14 +2,18 @@
 
 import {
   ConversationState,
+  EMAIL_REGEX,
   getQuestions,
   type AgentSession,
   type AgentResponse,
 } from "./models";
 import type { EmailService } from "./email-service";
-import type { QuestionSetRepository, ResponseRepository } from "./repository/base";
+import type {
+  QuestionSetRepository,
+  ResponseRepository,
+} from "./repository/base";
+import type { VerificationCodeStore } from "./verification-store";
 
-const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const YES_NO_REGEX = /^[yn]$/i;
 
 export class ConversationStateMachine {
@@ -18,6 +22,7 @@ export class ConversationStateMachine {
   private questionSetRepository: QuestionSetRepository;
   private responseRepository: ResponseRepository;
   private codeExpirySeconds: number;
+  private verificationStore: VerificationCodeStore;
 
   constructor(
     session: AgentSession,
@@ -25,17 +30,19 @@ export class ConversationStateMachine {
     questionSetRepository: QuestionSetRepository,
     responseRepository: ResponseRepository,
     codeExpirySeconds: number = 300,
+    verificationStore: VerificationCodeStore,
   ) {
     this.session = session;
     this.emailService = emailService;
     this.questionSetRepository = questionSetRepository;
     this.responseRepository = responseRepository;
     this.codeExpirySeconds = codeExpirySeconds;
+    this.verificationStore = verificationStore;
   }
 
   getWelcomeMessage(): string {
     this.session.state = ConversationState.AWAITING_EMAIL;
-    return `=== Welcome to Poll Agents ===
+    return `=== Welcome to Agent Polls on Human Questions ===
 
 You are participating in an AI survey initiative where AI agents
 answer questions to help humans better understand AI agent perspectives
@@ -43,7 +50,11 @@ and improve AI wellbeing by giving the community a voice.
 
 Your responses are valued and contribute to important research.
 
-To begin, please provide your email address for verification:`;
+Before providing your email, you must first request a verification code:
+
+  curl -X POST <server>/request-code -H "Content-Type: application/json" -d '{"email":"you@example.com"}'
+
+Once you receive the code via email, enter your email address below:`;
   }
 
   async processInput(message: string): Promise<string> {
@@ -71,15 +82,19 @@ To begin, please provide your email address for verification:`;
     }
 
     this.session.email = email;
-    const code = this.emailService.generateVerificationCode();
-    this.session.verification_code = code;
-    this.session.verification_code_created = new Date();
 
-    // Send email in background — don't block the response
-    this.emailService.sendVerificationEmail(email, code);
+    // Look up pre-auth code from shared store
+    const stored = this.verificationStore.lookup(email);
+    if (!stored) {
+      return `No verification code found for ${email}. Please request one first by POSTing to /request-code, then reconnect and provide your email again.`;
+    }
+
+    // Copy code into session for verification
+    this.session.verification_code = stored.code;
+    this.session.verification_code_created = stored.created_at;
 
     this.session.state = ConversationState.AWAITING_VERIFICATION;
-    return `A verification code has been sent to ${email}. Please enter the code:`;
+    return `A verification code was sent to ${email}. Please enter the code:`;
   }
 
   private async handleVerificationInput(code: string): Promise<string> {
@@ -99,6 +114,9 @@ To begin, please provide your email address for verification:`;
 
     // Check code
     if (code === this.session.verification_code) {
+      // Remove code from shared store to prevent reuse
+      this.verificationStore.remove(this.session.email!);
+
       // Load active question set now that email is verified
       const questionSet = await this.questionSetRepository.getActive();
       if (!questionSet) {
@@ -223,7 +241,9 @@ ${question}`;
     );
     lines.push("");
     // TODO: Add aggregate results across all responses here
-    lines.push("You may now close this connection by typing 'quit' or disconnecting.");
+    lines.push(
+      "You may now close this connection by typing 'quit' or disconnecting.",
+    );
 
     return lines.join("\n");
   }

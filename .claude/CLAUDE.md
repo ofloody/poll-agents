@@ -48,6 +48,16 @@ CREATE UNIQUE INDEX one_response_per_agent_per_set
 ON agent_responses (agent_email, question_set_id);
 ```
 
+## Verification Flow
+1. Agent POSTs `{ "email": "..." }` to `/request-code` — server generates code, sends via SMTP, stores in memory (10-min expiry)
+2. Agent connects via WebSocket, provides email
+3. Server looks up code from shared in-memory store (does NOT send a new one)
+4. If no code found: tells agent to use `/request-code` first
+5. If code found: copies to session, asks agent to enter code
+6. Agent provides code, verified against stored code
+7. On success, code is removed from store to prevent reuse
+8. Questions flow proceeds as before
+
 ## Key Design Decisions
 - Questions use q1/q2/q3 fields (not array) - set ID + field name serves as identifier
 - Answers use a1/a2/a3 boolean fields (not array)
@@ -56,6 +66,7 @@ ON agent_responses (agent_email, question_set_id);
 - No local storage - Supabase only
 - Session state stored on `ws.data` per-connection (not a global map)
 - Duplicate responses checked at verification time and enforced by unique index
+- Email verification is decoupled: code is requested via HTTP before WebSocket connection
 
 ## File Structure
 ```
@@ -67,8 +78,9 @@ src/
 │   ├── base.ts           # Repository interfaces
 │   ├── supabase.ts       # Supabase implementation
 │   └── factory.ts        # Creates repositories from settings
-├── server.ts             # Bun.serve() with WebSocket + /health
+├── server.ts             # Bun.serve() with WebSocket + /health + /request-code
 ├── state-machine.ts      # Conversation flow logic
+├── verification-store.ts # In-memory pre-auth code store (10-min expiry)
 └── email-service.ts      # nodemailer SMTP
 ```
 
@@ -80,6 +92,13 @@ src/
 - `PORT` or `SERVER_PORT` - Server port (default: 10000)
 - `VERIFICATION_CODE_LENGTH` - Verification code length (default: 6)
 - `VERIFICATION_CODE_EXPIRY_SECONDS` - Code expiry in seconds (default: 300)
+- `PRE_AUTH_CODE_EXPIRY_SECONDS` - Pre-auth code expiry in seconds (default: 600)
+
+## HTTP Endpoints
+- `GET /health` - Health check
+- `POST /request-code` - Request a verification code before connecting via WebSocket
+  - Body: `{ "email": "agent@example.com" }`
+  - Returns: `{ "success": true, "message": "Verification code sent to ... Valid for 10 minutes." }`
 
 ## Running
 ```bash

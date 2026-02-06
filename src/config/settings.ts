@@ -22,6 +22,7 @@ export interface SupabaseSettings {
 export interface VerificationSettings {
   code_length: number;
   code_expiry_seconds: number;
+  pre_auth_code_expiry_seconds: number;
 }
 
 export interface Settings {
@@ -69,6 +70,7 @@ export function loadSettings(): Settings {
     verification: {
       code_length: envInt("VERIFICATION_CODE_LENGTH", 6),
       code_expiry_seconds: envInt("VERIFICATION_CODE_EXPIRY_SECONDS", 300),
+      pre_auth_code_expiry_seconds: envInt("PRE_AUTH_CODE_EXPIRY_SECONDS", 600),
     },
   };
 }

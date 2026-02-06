@@ -10,8 +10,8 @@ RUN bun install --production
 COPY tsconfig.json ./
 COPY src/ src/
 
-# Expose port (set via PORT env var, Fly.io uses 8080)
-EXPOSE 8080
+# Expose port (set via PORT env var in fly.toml)
+EXPOSE 433
 
 # Run the server
 CMD ["bun", "run", "src/index.ts"]
